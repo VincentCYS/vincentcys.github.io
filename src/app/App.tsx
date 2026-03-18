@@ -3,7 +3,6 @@ import {
 	Coffee,
 	Plus,
 	Save,
-	Sparkles,
 	Timer as TimerIcon,
 	X,
 } from "lucide-react";
@@ -78,9 +77,10 @@ export default function App() {
 		{ id: "2", amount: 50, timeMarkSeconds: 45 },
 	]);
 	const [adjustedCoffee, setAdjustedCoffee] = useState<number | null>(null);
-	const [view, setView] = useState<"create" | "saved" | "timer">("create");
+	const [view, setView] = useState<"saved" | "create" | "timer">("saved");
 	const [currentPourIndex, setCurrentPourIndex] = useState(0);
 	const [showPresets, setShowPresets] = useState(false);
+	const [showOriginalRecipe, setShowOriginalRecipe] = useState(false);
 
 	// Load recipes from localStorage
 	useEffect(() => {
@@ -258,16 +258,6 @@ export default function App() {
 				{/* View Toggle */}
 				<div className="flex gap-2 mb-6">
 					<button
-						onClick={() => setView("create")}
-						className={`flex-1 py-3 px-4 rounded-lg transition-colors ${
-							view === "create"
-								? "bg-amber-800 text-white"
-								: "bg-white text-amber-800 border border-amber-200"
-						}`}
-					>
-						New Recipe
-					</button>
-					<button
 						onClick={() => setView("saved")}
 						className={`flex-1 py-3 px-4 rounded-lg transition-colors ${
 							view === "saved"
@@ -276,6 +266,16 @@ export default function App() {
 						}`}
 					>
 						Saved ({recipes.length})
+					</button>
+					<button
+						onClick={() => setView("create")}
+						className={`flex-1 py-3 px-4 rounded-lg transition-colors ${
+							view === "create"
+								? "bg-amber-800 text-white"
+								: "bg-white text-amber-800 border border-amber-200"
+						}`}
+					>
+						New Recipe
 					</button>
 					<button
 						onClick={() => setView("timer")}
@@ -292,39 +292,6 @@ export default function App() {
 				{/* Create Recipe View */}
 				{view === "create" && (
 					<div className="space-y-6">
-						{/* Brewing Method Presets */}
-						<div className="bg-white rounded-xl p-4 shadow-sm">
-							<button
-								onClick={() => setShowPresets(!showPresets)}
-								className="w-full flex items-center justify-between text-amber-900"
-							>
-								<span className="flex items-center gap-2">
-									<Sparkles className="w-5 h-5" />
-									Brewing Method Presets
-								</span>
-								<span className="text-muted-foreground">
-									{showPresets ? "−" : "+"}
-								</span>
-							</button>
-
-							{showPresets && (
-								<div className="mt-4 space-y-2">
-									{BREW_PRESETS.map((preset) => (
-										<button
-											key={preset.name}
-											onClick={() => applyPreset(preset)}
-											className="w-full text-left p-3 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors"
-										>
-											<div className="text-amber-900">{preset.name}</div>
-											<div className="text-muted-foreground">
-												{preset.description}
-											</div>
-										</button>
-									))}
-								</div>
-							)}
-						</div>
-
 						{/* Recipe Name */}
 						<div className="bg-white rounded-xl p-4 shadow-sm">
 							<label className="block mb-2 text-amber-900">Recipe Name</label>
@@ -534,49 +501,64 @@ export default function App() {
 							<>
 								{/* Original Recipe */}
 								<div className="bg-white rounded-xl p-4 shadow-sm">
-									<h3 className="text-amber-900 mb-3">Original Recipe</h3>
-									<div className="space-y-2 mb-3">
-										<div className="flex justify-between py-2 border-b border-amber-100">
-											<span className="text-muted-foreground">Coffee</span>
-											<span className="text-amber-900">
-												{selectedRecipe.coffeeGrounds}g
-											</span>
-										</div>
-										{selectedRecipe.pours.map((pour, index) => (
-											<div
-												key={pour.id}
-												className="flex justify-between py-2 border-b border-amber-100"
-											>
-												<span className="text-muted-foreground">
-													Pour {index + 1}
-												</span>
-												<div className="text-right">
-													<div className="text-amber-900">{pour.amount}ml</div>
-													<div className="text-muted-foreground text-sm">
-														@ {formatTimeInput(pour.timeMarkSeconds)}
+									<button
+										onClick={() => setShowOriginalRecipe(!showOriginalRecipe)}
+										className="w-full flex items-center justify-between text-amber-900"
+									>
+										<span>Original Recipe</span>
+										<span className="text-muted-foreground">
+											{showOriginalRecipe ? "−" : "+"}
+										</span>
+									</button>
+									{showOriginalRecipe && (
+										<div className="mt-4">
+											<div className="space-y-2 mb-3">
+												<div className="flex justify-between py-2 border-b border-amber-100">
+													<span className="text-muted-foreground">Coffee</span>
+													<span className="text-amber-900">
+														{selectedRecipe.coffeeGrounds}g
+													</span>
+												</div>
+												{selectedRecipe.pours.map((pour, index) => (
+													<div
+														key={pour.id}
+														className="flex justify-between py-2 border-b border-amber-100"
+													>
+														<span className="text-muted-foreground">
+															Pour {index + 1}
+														</span>
+														<div className="text-right">
+															<div className="text-amber-900">
+																{pour.amount}ml
+															</div>
+															<div className="text-muted-foreground text-sm">
+																@ {formatTimeInput(pour.timeMarkSeconds)}
+															</div>
+														</div>
 													</div>
+												))}
+												<div className="flex justify-between py-2 border-b border-amber-100">
+													<span className="text-muted-foreground">
+														Total Water
+													</span>
+													<span className="text-amber-900">
+														{getTotalWater(selectedRecipe.pours)}ml
+													</span>
 												</div>
 											</div>
-										))}
-										<div className="flex justify-between py-2 border-b border-amber-100">
-											<span className="text-muted-foreground">Total Water</span>
-											<span className="text-amber-900">
-												{getTotalWater(selectedRecipe.pours)}ml
-											</span>
+											<div className="bg-amber-50 p-3 rounded-lg">
+												<div className="text-muted-foreground">Ratio</div>
+												<div className="text-amber-900">
+													1:
+													{calculateRatio(
+														selectedRecipe.coffeeGrounds,
+														getTotalWater(selectedRecipe.pours),
+													)}
+												</div>
+											</div>
 										</div>
-									</div>
-									<div className="bg-amber-50 p-3 rounded-lg">
-										<div className="text-muted-foreground">Ratio</div>
-										<div className="text-amber-900">
-											1:
-											{calculateRatio(
-												selectedRecipe.coffeeGrounds,
-												getTotalWater(selectedRecipe.pours),
-											)}
-										</div>
-									</div>
-								</div>
-
+									)}
+								</div>{" "}
 								{/* Adjust Coffee */}
 								<div className="bg-white rounded-xl p-4 shadow-sm">
 									<label className="block mb-2 text-amber-900">
@@ -599,7 +581,6 @@ export default function App() {
 											</button>
 										)}
 								</div>
-
 								{/* Adjusted Recipe */}
 								{adjustedCoffee !== null &&
 									adjustedCoffee !== selectedRecipe.coffeeGrounds &&
@@ -642,7 +623,6 @@ export default function App() {
 											</div>
 										</div>
 									)}
-
 								{/* Start Brewing Button */}
 								<button
 									onClick={() => {
