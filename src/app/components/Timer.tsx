@@ -1,4 +1,3 @@
-import { Pause, Play, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface TimerProps {
@@ -8,15 +7,16 @@ interface TimerProps {
 	timeMarkSeconds: number;
 	onComplete: () => void;
 	onReset: () => void;
+	isDarkTheme: boolean;
 }
 
 export function Timer({
 	pourNumber,
 	totalPours,
 	amount,
-	timeMarkSeconds,
 	onComplete,
 	onReset,
+	isDarkTheme,
 }: TimerProps) {
 	const [seconds, setSeconds] = useState(0);
 	const [isRunning, setIsRunning] = useState(false);
@@ -48,56 +48,69 @@ export function Timer({
 	};
 
 	const handleComplete = () => {
-		if (totalPours == pourNumber + 1) {
+		if (pourNumber >= totalPours) {
 			setIsRunning(false);
 		}
 		onComplete();
 	};
 
 	return (
-		<div className="bg-slate-800 rounded-xl p-6 shadow-md border border-slate-700">
+		<div
+			className={`rounded-xl p-6 shadow-md border ${isDarkTheme ? "bg-slate-800 border-slate-700" : "bg-white border-amber-100"}`}
+		>
 			<div className="text-center mb-6">
-				<div className="text-6xl font-bold text-amber-100 font-mono mb-2">
+				<div
+					className={`text-6xl font-bold font-mono mb-2 ${isDarkTheme ? "text-amber-100" : "text-amber-900"}`}
+				>
 					{formatTime(seconds)}
 				</div>
-				<div className="text-slate-400">
+				<div className={isDarkTheme ? "text-slate-400" : "text-amber-700"}>
 					Pour {pourNumber} of {totalPours}
 				</div>
 			</div>
 
 			{/* Target Amount */}
-			<div className="bg-slate-700 rounded-lg p-4 mb-6 text-center">
-				<div className="text-slate-400 text-sm mb-1">Target Amount</div>
-				<div className="text-2xl font-bold text-amber-100">{amount}ml</div>
+			<div
+				className={`rounded-lg p-4 mb-6 text-center ${isDarkTheme ? "bg-slate-700" : "bg-amber-50"}`}
+			>
+				<div
+					className={
+						isDarkTheme
+							? "text-slate-400 text-sm mb-1"
+							: "text-amber-700 text-sm mb-1"
+					}
+				>
+					Target Amount
+				</div>
+				<div
+					className={`text-2xl font-bold ${isDarkTheme ? "text-amber-100" : "text-amber-900"}`}
+				>
+					{amount}ml
+				</div>
 			</div>
 
 			{/* Control Buttons */}
 			<div className="flex gap-3 mb-4">
 				<button
 					onClick={() => setIsRunning(!isRunning)}
-					className={`flex-1 py-3 rounded-lg transition-colors flex items-center justify-center gap-2 ${
-						isRunning
-							? "bg-amber-700 hover:bg-amber-600 text-white"
-							: "bg-amber-800 text-white hover:bg-amber-900"
-					}`}
+					disabled={pourNumber > totalPours}
+					className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
+						isDarkTheme
+							? "bg-amber-700 hover:bg-amber-600 text-white disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+							: "bg-amber-600 hover:bg-amber-700 text-white disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+					} `}
 				>
-					{isRunning ? (
-						<>
-							<Pause className="w-4 h-4" />
-							Pause
-						</>
-					) : (
-						<>
-							<Play className="w-4 h-4" />
-							Start
-						</>
-					)}
+					{isRunning ? "Pause" : "Start"}
 				</button>
 				<button
 					onClick={reset}
-					className="flex-1 bg-slate-700 hover:bg-slate-600 text-amber-100 rounded-lg font-semibold transition-colors"
+					className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
+						isDarkTheme
+							? "bg-slate-700 hover:bg-slate-600 text-amber-100"
+							: "bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200"
+					}`}
 				>
-					<RotateCcw className="w-full w-4 h-4" />
+					Reset
 				</button>
 			</div>
 
@@ -105,7 +118,12 @@ export function Timer({
 			<button
 				onClick={handleComplete}
 				disabled={(pourNumber === 1 && !isRunning) || pourNumber > totalPours}
-				className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-semibold transition-colors disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+				className={`w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-semibold transition-colors 
+				${
+					isDarkTheme
+						? "disabled:text-gray-400 disabled:cursor-not-allowed disabled:from-gray-600 disabled:to-gray-600"
+						: "disabled:text-gray-400 disabled:cursor-not-allowed disabled:from-gray-200 disabled:to-gray-200"
+				}`}
 			>
 				Pour Complete
 			</button>
