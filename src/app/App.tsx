@@ -84,6 +84,7 @@ export default function App() {
 
 	// Load recipes from localStorage
 	useEffect(() => {
+		const savedRecipes = localStorage.getItem("coffeeRecipes");
 		let presetRecipes: Recipe[] = [];
 		BREW_PRESETS.map((preset, index) => {
 			presetRecipes.push({
@@ -95,8 +96,12 @@ export default function App() {
 			});
 		});
 
+		presetRecipes = presetRecipes.concat(
+			savedRecipes ? JSON.parse(savedRecipes) : [],
+		);
+
 		localStorage.setItem("coffeeRecipes", JSON.stringify(presetRecipes));
-		const savedRecipes = localStorage.getItem("coffeeRecipes");
+
 		if (savedRecipes) {
 			setRecipes(JSON.parse(savedRecipes));
 		}
