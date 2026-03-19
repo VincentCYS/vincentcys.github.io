@@ -241,6 +241,11 @@ export default function App() {
 		setCurrentPourIndex(0);
 	};
 
+	// Update iOS status bar color based on theme
+	useEffect(() => {
+		document.body.style.backgroundColor = isDarkTheme ? "#0f172a" : "#fef3c7";
+	}, [isDarkTheme]);
+
 	const adjustedPours = getAdjustedPours();
 	const currentTotalWater = getTotalWater(pours);
 	const currentRatio = calculateRatio(coffeeGrounds, currentTotalWater);
