@@ -246,6 +246,7 @@ export default function App() {
 		document.body.style.backgroundColor = isDarkTheme ? "#0f172a" : "#fef3c7";
 	}, [isDarkTheme]);
 
+	// Update color-scheme meta tag
 	const adjustedPours = getAdjustedPours();
 	const currentTotalWater = getTotalWater(pours);
 	const currentRatio = calculateRatio(coffeeGrounds, currentTotalWater);
