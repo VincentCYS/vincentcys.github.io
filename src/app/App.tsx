@@ -100,8 +100,6 @@ export default function App() {
 			savedRecipes ? JSON.parse(savedRecipes) : [],
 		);
 
-		localStorage.setItem("coffeeRecipes", JSON.stringify(presetRecipes));
-
 		if (savedRecipes) {
 			setRecipes(JSON.parse(savedRecipes));
 		}
