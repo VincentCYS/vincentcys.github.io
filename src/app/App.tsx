@@ -1,16 +1,8 @@
-import {
-	Beaker,
-	Coffee,
-	Moon,
-	Plus,
-	Save,
-	Sparkles,
-	Sun,
-	Timer as TimerIcon,
-	X,
-} from "lucide-react";
+import { Coffee, Moon, Sun, Timer as TimerIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Timer } from "./components/Timer";
+import { NewRecipe } from "./pages/NewRecipe";
+import { SavedRecipe } from "./pages/SavedRecipe";
+import { StartBrew } from "./pages/StartBrew";
 
 interface Pour {
 	id: string;
@@ -82,8 +74,6 @@ export default function App() {
 	const [adjustedCoffee, setAdjustedCoffee] = useState<number | null>(null);
 	const [view, setView] = useState<"create" | "saved" | "timer">("create");
 	const [currentPourIndex, setCurrentPourIndex] = useState(0);
-	const [showPresets, setShowPresets] = useState(false);
-	const [showOriginalRecipe, setShowOriginalRecipe] = useState(false);
 	const [isDarkTheme, setIsDarkTheme] = useState(true);
 
 	// Load recipes from localStorage
@@ -202,7 +192,6 @@ export default function App() {
 
 	const getAdjustedPours = () => {
 		if (!selectedRecipe || adjustedCoffee === null) return null;
-		const originalTotal = getTotalWater(selectedRecipe.pours);
 		const ratio = adjustedCoffee / selectedRecipe.coffeeGrounds;
 		return selectedRecipe.pours.map((p) => ({
 			...p,
@@ -220,7 +209,6 @@ export default function App() {
 				id: Date.now().toString() + Math.random() + i,
 			})),
 		);
-		setShowPresets(false);
 	};
 
 	const startBrewing = () => {
@@ -246,10 +234,7 @@ export default function App() {
 		document.body.style.backgroundColor = isDarkTheme ? "#0f172a" : "#fef3c7";
 	}, [isDarkTheme]);
 
-	// Update color-scheme meta tag
 	const adjustedPours = getAdjustedPours();
-	const currentTotalWater = getTotalWater(pours);
-	const currentRatio = calculateRatio(coffeeGrounds, currentTotalWater);
 
 	// Theme classes
 	const themes = {
@@ -259,17 +244,13 @@ export default function App() {
 		card: isDarkTheme
 			? "bg-slate-800 border-slate-700"
 			: "bg-white border-amber-100",
-		cardBorder: isDarkTheme ? "border-slate-700" : "border-amber-100",
-		input: isDarkTheme
-			? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-500"
-			: "bg-white border-amber-100 text-amber-900 placeholder-white-300",
-		heading: isDarkTheme ? "text-amber-100" : "text-amber-900",
+		heading: isDarkTheme ? "text-white" : "text-amber-900",
 		text: isDarkTheme ? "text-slate-400" : "text-amber-700",
 		primaryBtn: isDarkTheme
 			? "bg-amber-700 hover:bg-amber-600 text-white"
 			: "bg-amber-600 hover:bg-amber-700 text-white",
 		secondaryBtn: isDarkTheme
-			? "bg-slate-700 hover:bg-slate-600 text-amber-100 border-slate-500"
+			? "bg-slate-700 hover:bg-slate-600 text-white border-slate-500"
 			: "bg-white hover:bg-amber-50 text-amber-800 border-amber-200",
 	};
 
@@ -279,7 +260,7 @@ export default function App() {
 				{/* Header with Theme Toggle */}
 				<div className="text-center mb-6 pt-4">
 					<div className="flex items-center justify-between mb-4">
-						<div className="w-10"></div>
+						{/* <div className="w-10"></div> */}
 						<div className="flex items-center justify-center gap-2">
 							<Coffee
 								className={`w-8 h-8 ${isDarkTheme ? "text-amber-400" : "text-amber-600"}`}
@@ -304,9 +285,6 @@ export default function App() {
 							)}
 						</button>
 					</div>
-					<p className={themes.text}>
-						Create and manage your pour-over recipes
-					</p>
 				</div>
 
 				{/* View Toggle */}
@@ -345,583 +323,65 @@ export default function App() {
 
 				{/* Create Recipe View */}
 				{view === "create" && (
-					<div className="space-y-6">
-						{/* Brewing Method Presets */}
-						<div className={`rounded-xl p-4 shadow-sm border ${themes.card}`}>
-							<button
-								onClick={() => setShowPresets(!showPresets)}
-								className={`w-full flex items-center justify-between ${themes.heading}`}
-							>
-								<span className="flex items-center gap-2">
-									<Sparkles className="w-5 h-5" />
-									Brewing Method Presets
-								</span>
-								<span className={themes.text}>{showPresets ? "−" : "+"}</span>
-							</button>
-
-							{showPresets && (
-								<div className="mt-4 space-y-2">
-									{BREW_PRESETS.map((preset) => (
-										<button
-											key={preset.name}
-											onClick={() => applyPreset(preset)}
-											className={`w-full text-left p-3 rounded-lg border transition-colors ${
-												isDarkTheme
-													? "border-amber-700 hover:bg-slate-700"
-													: "border-amber-100 hover:bg-amber-50"
-											}`}
-										>
-											<div className={themes.heading}>{preset.name}</div>
-											<div className={themes.text}>{preset.description}</div>
-										</button>
-									))}
-								</div>
-							)}
-						</div>
-
-						{/* Recipe Name */}
-						<div className={`rounded-xl p-4 shadow-sm border ${themes.card}`}>
-							<label className={`block mb-2 ${themes.heading}`}>
-								Recipe Name
-							</label>
-							<input
-								type="text"
-								value={recipeName}
-								onChange={(e) => setRecipeName(e.target.value)}
-								placeholder="e.g., Morning V60"
-								className={`w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 border ${themes.input}`}
-							/>
-						</div>
-
-						{/* Coffee Grounds */}
-						<div className={`rounded-xl p-4 shadow-sm border ${themes.card}`}>
-							<label className={`block mb-2 ${themes.heading}`}>
-								Coffee Grounds (g)
-							</label>
-							<input
-								type="tel"
-								inputMode="numeric"
-								value={coffeeGrounds}
-								onChange={(e) => setCoffeeGrounds(Number(e.target.value))}
-								className={`w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 border ${themes.input}`}
-							/>
-						</div>
-
-						{/* Pours */}
-						<div className={`rounded-xl p-4 shadow-sm border ${themes.card}`}>
-							<div className="flex items-center justify-between mb-2">
-								<label className={themes.heading}>Pours</label>
-								<button
-									onClick={addPour}
-									className={`flex items-center gap-1 px-3 py-1.5 rounded-lg transition-colors ${themes.primaryBtn}`}
-								>
-									<Plus className="w-4 h-4" />
-									Add Pour
-								</button>
-							</div>
-							<p className={`${themes.text} text-sm mb-3`}>
-								Enter water amount and time mark (mm:ss) for each pour
-							</p>
-
-							<div className="space-y-3">
-								{pours.map((pour, index) => (
-									<div
-										key={pour.id}
-										className={`space-y-2 rounded-lg border py-2 px-2 ${
-											isDarkTheme
-												? "bg-slate-700 border-slate-700"
-												: "bg-amber-50 border-amber-100"
-										}`}
-									>
-										<div className="flex items-center justify-between">
-											<span
-												className={`${themes.heading} text-sm sm:text-base`}
-											>
-												Pour {index + 1}
-											</span>
-											{pours.length > 1 && (
-												<button
-													onClick={() => removePour(pour.id)}
-													className="p-1.5 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-												>
-													<X className="w-4 h-4" />
-												</button>
-											)}
-										</div>
-										<div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center mr-2 mb-1">
-											<div className="flex items-center flex-1 mb-1">
-												<input
-													type="tel"
-													inputMode="numeric"
-													value={pour.amount}
-													onChange={(e) =>
-														updatePourAmount(pour.id, Number(e.target.value))
-													}
-													placeholder="Amount"
-													className={`flex-1 px-1 sm:px-2 py-1.5 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 border min-w-0 ${
-														isDarkTheme
-															? "bg-slate-600 border-slate-500 text-slate-100 placeholder-slate-500"
-															: "bg-white border-amber-100 text-amber-900 placeholder-amber-500"
-													}`}
-												/>
-												<span
-													className={`ml-1 text-xs sm:text-sm whitespace-nowrap ${themes.text}`}
-												>
-													ml
-												</span>
-											</div>
-											<div className="flex items-center flex-1 mb">
-												<input
-													type="text"
-													value={formatTimeInput(pour.timeMarkSeconds)}
-													onChange={(e) =>
-														updatePourTimeMark(
-															pour.id,
-															parseTimeInput(e.target.value),
-														)
-													}
-													placeholder="0:00"
-													className={`flex-1 px-1 sm:px-2 py-1.5 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 border min-w-0 ${
-														isDarkTheme
-															? "bg-slate-600 border-slate-500 text-slate-100 placeholder-slate-500"
-															: "bg-white border-amber-100 text-amber-900 placeholder-amber-500"
-													}`}
-												/>
-												<TimerIcon
-													className={`ml-1 w-4 h-4 flex-shrink-0 ${themes.text}`}
-												/>
-											</div>
-										</div>
-									</div>
-								))}
-							</div>
-						</div>
-
-						{/* Current Ratio Display */}
-						<div className="bg-gradient-to-r from-amber-700 to-orange-700 text-white rounded-xl p-4 shadow-sm">
-							<div className="flex items-center justify-between mb-2">
-								<span className="flex items-center gap-2">
-									<Beaker className="w-5 h-5" />
-									Water to Coffee Ratio
-								</span>
-							</div>
-							<div className="flex items-baseline gap-2">
-								<span className="opacity-90">{currentTotalWater}ml water</span>
-								<span className="opacity-75">/</span>
-								<span className="opacity-90">{coffeeGrounds}g coffee</span>
-								<span className="opacity-75">=</span>
-								<span>1:{currentRatio}</span>
-							</div>
-						</div>
-
-						{/* Action Buttons */}
-						<div className="flex gap-3">
-							<button
-								onClick={startBrewing}
-								className="flex-1 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-colors flex items-center justify-center gap-2 shadow-md"
-							>
-								<TimerIcon className="w-5 h-5" />
-								Start Brewing
-							</button>
-							<button
-								onClick={saveRecipe}
-								className={`flex-1 py-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md ${themes.primaryBtn}`}
-							>
-								<Save className="w-5 h-5" />
-								Save Recipe
-							</button>
-						</div>
-					</div>
+					<NewRecipe
+						recipeName={recipeName}
+						setRecipeName={setRecipeName}
+						coffeeGrounds={coffeeGrounds}
+						setCoffeeGrounds={setCoffeeGrounds}
+						pours={pours}
+						addPour={addPour}
+						removePour={removePour}
+						updatePourAmount={updatePourAmount}
+						updatePourTimeMark={updatePourTimeMark}
+						saveRecipe={saveRecipe}
+						startBrewing={startBrewing}
+						applyPreset={applyPreset}
+						BREW_PRESETS={BREW_PRESETS}
+						isDarkTheme={isDarkTheme}
+						formatTimeInput={formatTimeInput}
+						parseTimeInput={parseTimeInput}
+						getTotalWater={getTotalWater}
+						calculateRatio={calculateRatio}
+					/>
 				)}
 
 				{/* Saved Recipes View */}
 				{view === "saved" && (
-					<div className="space-y-6">
-						{/* Recipe Selector */}
-						{recipes.length > 0 ? (
-							<div className={`rounded-xl p-4 shadow-sm border ${themes.card}`}>
-								<label className={`block mb-3 ${themes.heading}`}>
-									Select a Recipe
-								</label>
-								<div className="space-y-2">
-									{recipes.map((recipe) => (
-										<div
-											key={recipe.id}
-											className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all cursor-pointer ${
-												selectedRecipeId === recipe.id
-													? isDarkTheme
-														? "border-amber-500 bg-slate-700"
-														: "border-amber-500 bg-amber-50"
-													: isDarkTheme
-														? "border-slate-700 hover:border-amber-600"
-														: "border-amber-100 hover:border-amber-500"
-											}`}
-											onClick={() => selectRecipe(recipe)}
-										>
-											<div>
-												<div className={themes.heading}>{recipe.name}</div>
-												<div className={`${themes.text} text-sm`}>
-													{recipe.coffeeGrounds}g •{" "}
-													{getTotalWater(recipe.pours)}ml •{" "}
-													{recipe.pours.length} pours
-												</div>
-												<div className={`${themes.text} text-sm`}>
-													{formatTimeInput(
-														recipe.pours[0]?.timeMarkSeconds || 0,
-													)}{" "}
-													-{" "}
-													{formatTimeInput(
-														recipe.pours[recipe.pours.length - 1]
-															?.timeMarkSeconds || 0,
-													)}
-												</div>
-											</div>
-											<button
-												onClick={(e) => {
-													e.stopPropagation();
-													deleteRecipe(recipe.id);
-												}}
-												className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-											>
-												<X className="w-4 h-4" />
-											</button>
-										</div>
-									))}
-								</div>
-							</div>
-						) : (
-							<div
-								className={`rounded-xl p-8 shadow-sm text-center border ${themes.card}`}
-							>
-								<Coffee
-									className={`w-12 h-12 ${isDarkTheme ? "text-amber-600" : "text-amber-500"} mx-auto mb-3`}
-								/>
-								<p className={`${themes.text} mb-4`}>No saved recipes yet</p>
-								<button
-									onClick={() => setView("create")}
-									className={`px-6 py-2 rounded-lg transition-colors ${themes.primaryBtn}`}
-								>
-									Create Your First Recipe
-								</button>
-							</div>
-						)}
-
-						{/* Selected Recipe Details */}
-						{selectedRecipe && (
-							<>
-								{/* Original Recipe */}
-								<div
-									className={`rounded-xl p-4 shadow-sm border ${themes.card}`}
-								>
-									<button
-										onClick={() => setShowOriginalRecipe(!showOriginalRecipe)}
-										className={`w-full flex items-center justify-between ${themes.heading}`}
-									>
-										<span>Original Recipe</span>
-										<span className={themes.text}>
-											{showOriginalRecipe ? "−" : "+"}
-										</span>
-									</button>
-									{showOriginalRecipe && (
-										<div className="mt-4">
-											<div
-												className={`space-y-2 mb-3 ${isDarkTheme ? "border-slate-700" : "border-amber-100"}`}
-											>
-												<div
-													className={`flex justify-between py-2 border-b ${isDarkTheme ? "border-slate-700" : "border-amber-100"}`}
-												>
-													<span className={themes.text}>Coffee</span>
-													<span className={themes.heading}>
-														{selectedRecipe.coffeeGrounds}g
-													</span>
-												</div>
-												{selectedRecipe.pours.map((pour, index) => (
-													<div
-														key={pour.id}
-														className={`flex justify-between py-2 border-b ${isDarkTheme ? "border-slate-700" : "border-amber-100"}`}
-													>
-														<span className={themes.text}>
-															Pour {index + 1}
-														</span>
-														<div className="text-right">
-															<div className={themes.heading}>
-																{pour.amount}ml
-															</div>
-															<div className={`${themes.text} text-sm`}>
-																@ {formatTimeInput(pour.timeMarkSeconds)}
-															</div>
-														</div>
-													</div>
-												))}
-												<div
-													className={`flex justify-between py-2 border-b ${isDarkTheme ? "border-slate-700" : "border-amber-100"}`}
-												>
-													<span className={themes.text}>Total Water</span>
-													<span className={themes.heading}>
-														{getTotalWater(selectedRecipe.pours)}ml
-													</span>
-												</div>
-											</div>
-											<div
-												className={`p-3 rounded-lg ${isDarkTheme ? "bg-slate-700" : "bg-amber-50"}`}
-											>
-												<div className={themes.text}>Ratio</div>
-												<div className={themes.heading}>
-													1:
-													{calculateRatio(
-														selectedRecipe.coffeeGrounds,
-														getTotalWater(selectedRecipe.pours),
-													)}
-												</div>
-											</div>
-										</div>
-									)}
-								</div>
-
-								{/* Adjust Coffee */}
-								<div
-									className={`rounded-xl p-4 shadow-sm border ${themes.card}`}
-								>
-									<label className={`block mb-2 ${themes.heading}`}>
-										Adjust Coffee Amount
-									</label>
-									<input
-										type="tel"
-										inputMode="numeric"
-										value={adjustedCoffee ?? selectedRecipe.coffeeGrounds}
-										onChange={(e) => setAdjustedCoffee(Number(e.target.value))}
-										className={`w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 border ${themes.input}`}
-									/>
-									{adjustedCoffee !== null &&
-										adjustedCoffee !== selectedRecipe.coffeeGrounds && (
-											<button
-												onClick={() => setAdjustedCoffee(null)}
-												className="mt-2 text-amber-400 hover:text-amber-300"
-											>
-												Reset to original
-											</button>
-										)}
-								</div>
-
-								{/* Adjusted Recipe */}
-								{adjustedCoffee !== null &&
-									adjustedCoffee !== selectedRecipe.coffeeGrounds &&
-									adjustedPours && (
-										<div
-											className={`rounded-xl p-4 shadow-md border ${
-												isDarkTheme
-													? "bg-gradient-to-br from-slate-800 to-slate-700 border-slate-600 text-white"
-													: "bg-gradient-to-br from-white to-amber-50 border-amber-200 text-amber-900"
-											}`}
-										>
-											<h3 className={`mb-3 ${themes.heading}`}>
-												Adjusted Recipe
-											</h3>
-											<div
-												className={`space-y-2 mb-3 ${isDarkTheme ? "border-slate-600" : "border-amber-100"}`}
-											>
-												<div
-													className={`flex justify-between py-2 border-b ${isDarkTheme ? "border-slate-600" : "border-amber-100"}`}
-												>
-													<span
-														className={
-															isDarkTheme ? "opacity-90" : "opacity-75"
-														}
-													>
-														Coffee
-													</span>
-													<span>{adjustedCoffee}g</span>
-												</div>
-												{adjustedPours.map((pour, index) => (
-													<div
-														key={pour.id}
-														className={`flex justify-between py-2 border-b ${isDarkTheme ? "border-slate-600" : "border-amber-100"}`}
-													>
-														<span
-															className={
-																isDarkTheme ? "opacity-90" : "opacity-75"
-															}
-														>
-															Pour {index + 1}
-														</span>
-														<div className="text-right">
-															<div>{pour.amount}ml</div>
-															<div
-																className={`text-sm ${isDarkTheme ? "opacity-75" : "opacity-60"}`}
-															>
-																@ {formatTimeInput(pour.timeMarkSeconds)}
-															</div>
-														</div>
-													</div>
-												))}
-												<div
-													className={`flex justify-between py-2 border-b ${isDarkTheme ? "border-slate-600" : "border-amber-100"}`}
-												>
-													<span
-														className={
-															isDarkTheme ? "opacity-90" : "opacity-75"
-														}
-													>
-														Total Water
-													</span>
-													<span>{getTotalWater(adjustedPours)}ml</span>
-												</div>
-											</div>
-											<div
-												className={`p-3 rounded-lg ${isDarkTheme ? "bg-slate-600/50" : "bg-amber-100/50"}`}
-											>
-												<div
-													className={isDarkTheme ? "opacity-90" : "opacity-75"}
-												>
-													Ratio
-												</div>
-												<div>
-													1:
-													{calculateRatio(
-														adjustedCoffee,
-														getTotalWater(adjustedPours),
-													)}
-												</div>
-											</div>
-										</div>
-									)}
-
-								{/* Start Brewing Button */}
-								<button
-									onClick={() => {
-										if (
-											adjustedCoffee !== null &&
-											adjustedCoffee !== selectedRecipe.coffeeGrounds &&
-											adjustedPours
-										) {
-											setCoffeeGrounds(adjustedCoffee);
-											setPours(adjustedPours.map((p) => ({ ...p })));
-										}
-										startBrewing();
-									}}
-									className="w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-colors flex items-center justify-center gap-2 shadow-md"
-								>
-									<TimerIcon className="w-5 h-5" />
-									Start Brewing
-								</button>
-							</>
-						)}
-					</div>
+					<SavedRecipe
+						recipes={recipes}
+						selectedRecipeId={selectedRecipeId}
+						selectRecipe={selectRecipe}
+						deleteRecipe={deleteRecipe}
+						selectedRecipe={selectedRecipe}
+						adjustedCoffee={adjustedCoffee}
+						setAdjustedCoffee={setAdjustedCoffee}
+						adjustedPours={adjustedPours}
+						startBrewing={startBrewing}
+						isDarkTheme={isDarkTheme}
+						setView={setView}
+						formatTimeInput={formatTimeInput}
+						getTotalWater={getTotalWater}
+						calculateRatio={calculateRatio}
+						setCoffeeGrounds={setCoffeeGrounds}
+						setPours={setPours}
+					/>
 				)}
 
 				{/* Timer View */}
 				{view === "timer" && (
-					<div className="space-y-6">
-						{/* Recipe Summary */}
-						<div className="bg-gradient-to-r from-amber-700 to-orange-700 text-white rounded-xl p-4 shadow-md">
-							<div className="flex items-center justify-between mb-2">
-								<h3>{recipeName || "Current Recipe"}</h3>
-								<div className="flex items-center gap-2">
-									<Beaker className="w-4 h-4" />
-									Ratio 1:{currentRatio}
-								</div>
-							</div>
-							<div className="opacity-90">
-								{coffeeGrounds}g coffee • {currentTotalWater}ml water •{" "}
-								{pours.length} pours
-							</div>
-						</div>
-
-						{/* Current Pour Indicator */}
-						<div className={`rounded-xl p-4 shadow-sm border ${themes.card}`}>
-							<div className="flex gap-2 mb-3">
-								{pours.map((_, index) => (
-									<div
-										key={index}
-										className={`flex-1 h-2 rounded-full transition-colors ${
-											index < currentPourIndex
-												? "bg-green-500"
-												: index === currentPourIndex
-													? "bg-amber-500"
-													: isDarkTheme
-														? "bg-slate-700"
-														: "bg-amber-100"
-										}`}
-									/>
-								))}
-							</div>
-							<div className={`text-center ${themes.text}`}>
-								Pour {currentPourIndex + 1} of {pours.length}
-							</div>
-						</div>
-
-						{/* Active Timer */}
-						<Timer
-							pourNumber={currentPourIndex + 1}
-							totalPours={pours.length}
-							amount={pours[currentPourIndex]?.amount || 0}
-							timeMarkSeconds={pours[currentPourIndex]?.timeMarkSeconds || 0}
-							onComplete={handlePourComplete}
-							onReset={handleResetPour}
-							isDarkTheme={isDarkTheme}
-						/>
-
-						{/* All Pours List */}
-						<div className={`rounded-xl p-4 shadow-sm border ${themes.card}`}>
-							<h3 className={`${themes.heading} mb-3`}>All Pours</h3>
-							<div className="space-y-2">
-								{pours.map((pour, index) => (
-									<div
-										key={pour.id}
-										className={`flex justify-between items-center p-3 rounded-lg border ${
-											index === currentPourIndex
-												? isDarkTheme
-													? "bg-amber-700 border-amber-500"
-													: "bg-amber-200 border-amber-400"
-												: index < currentPourIndex
-													? isDarkTheme
-														? "bg-green-900 border-green-700"
-														: "bg-green-100 border-green-300"
-													: isDarkTheme
-														? "bg-slate-700 border-slate-600"
-														: "bg-amber-50 border-amber-100"
-										}`}
-									>
-										<span className={themes.heading}>
-											Pour {index + 1}
-											{index < currentPourIndex && " ✓"}
-											{index === currentPourIndex && " (Active)"}
-										</span>
-										<div className="text-right">
-											<div className={themes.heading}>{pour.amount}ml</div>
-											<div className={`text-sm ${themes.text}`}>
-												@ {formatTimeInput(pour.timeMarkSeconds)}
-											</div>
-										</div>
-									</div>
-								))}
-							</div>
-						</div>
-
-						{/* Completion */}
-						{currentPourIndex >= pours.length && (
-							<div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl p-6 shadow-md text-center">
-								<h3 className="mb-2">Brewing Complete!</h3>
-								<p className="opacity-90 mb-4">Enjoy your coffee</p>
-								<div className="flex gap-2">
-									<button
-										onClick={() => setView("create")}
-										className="flex-1 py-3 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
-									>
-										New Recipe
-									</button>
-									<button
-										onClick={() => {
-											handleResetPour();
-										}}
-										className="flex-1 py-3 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
-									>
-										Brew Again
-									</button>
-								</div>
-							</div>
-						)}
-					</div>
+					<StartBrew
+						recipeName={recipeName}
+						coffeeGrounds={coffeeGrounds}
+						pours={pours}
+						currentPourIndex={currentPourIndex}
+						handlePourComplete={handlePourComplete}
+						handleResetPour={handleResetPour}
+						isDarkTheme={isDarkTheme}
+						setView={setView}
+						formatTimeInput={formatTimeInput}
+						getTotalWater={getTotalWater}
+						calculateRatio={calculateRatio}
+					/>
 				)}
 			</div>
 		</div>
